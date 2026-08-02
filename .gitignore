@@ -1,0 +1,15 @@
+# Variables d'environnement (TRÈS IMPORTANT)
+.env
+.env.*
+!.env.example
+
+# OS et Éditeurs
+.DS_Store
+.idea/
+.vscode/
+
+# Données Docker locales
+postgres_data/
+
+# Fichiers de log
+*.log

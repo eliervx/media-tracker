@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  username  String      @unique
+  password  String
+  createdAt DateTime    @default(now())
+  library   UserMedia[]
+}
+
+model Media {
+  id                    Int       @id @default(autoincrement())
+  title                 String
+  type                  String // "FILM" ou "SERIE"
+  createdAt             DateTime  @default(now())
+  lastUpdate            DateTime  @default(now()) @updatedAt
+  releaseDate           DateTime?
+  description           String?
+  posterPath            String?
+  nbSeason              Int?
+  lastSeasonReleaseDate DateTime?
+
+  // Relations
+  providers MediaProvider[] // Lien vers les plateformes avec l'URL spécifique
+
+  users UserMedia[]
+}
+
+model Provider {
+  id      String  @id
+  name    String  @unique // "Netflix", "Amazon Prime"
+  logoUrl String?
+
+  medias MediaProvider[]
+}
+
+// Nouvelle Table Pivot explicite : Fait le lien précis entre un Film et une Plateforme
+model MediaProvider {
+  id         Int      @id @default(autoincrement())
+  type       String // ABONNEMENT / LOCATION / ACHAT
+  createdAt  DateTime @default(now())
+  lastUpdate DateTime @default(now()) @updatedAt
+  audios     String[] @default([])
+  subtitles  String[] @default([])
+  link       String?
+
+  // Clés étrangères
+  mediaId Int
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  // Sécurité : Un film ne peut pas être lié deux fois à la même plateforme
+  @@unique([mediaId, providerId])
+}
+
+model UserMedia {
+  id         Int      @id @default(autoincrement())
+  status     String // "A_VOIR, VU, EN_COURS"
+  addedAt    DateTime @default(now())
+  lastUpdate DateTime @default(now()) @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mediaId Int
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mediaId])
+}

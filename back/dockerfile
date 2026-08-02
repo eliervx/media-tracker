@@ -1,0 +1,42 @@
+# --- Stage 1: Build ---
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+# 1. Copie des fichiers de configuration et des dépendances
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Fix pour s'assurer que Prisma et Nest CLI sont bien installés
+ENV NODE_ENV=development
+RUN npm ci
+
+# 2. Copie de l'intégralité du code backend (y compris le .env du dossier back s'il existe)
+COPY . .
+
+# 3. Génération des types Prisma et compilation NestJS
+RUN npx prisma generate
+RUN npm run build
+
+# 4. Nettoyage des devDependencies pour réduire le volume de l'image
+RUN npm prune --omit=dev
+
+# --- Stage 2: Runner ---
+# --- Stage 2: Runner ---
+FROM node:24-alpine AS runner
+WORKDIR /app
+
+COPY package*.json ./
+COPY prisma ./prisma/
+COPY prisma.config.ts ./
+
+# 🔴 LE BON CHEMIN CORRESPONDANT À VOTRE SCHEMA.PRISMA :
+COPY --from=builder /app/generated ./generated
+
+# Copie de node_modules et du code compilé dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
