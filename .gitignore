@@ -13,3 +13,5 @@ postgres_data/
 
 # Fichiers de log
 *.log
+
+docker-compose.yml
