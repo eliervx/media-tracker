@@ -48,7 +48,7 @@ export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: Med
 		const searchMovies = async () => {
 			setLoading(true);
 			try {
-				const response = await fetch(`http://localhost:3000/api/medias/search?query=${encodeURIComponent(query)}`, {
+				const response = await fetch(`/api/medias/search?query=${encodeURIComponent(query)}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: Med
 		const token = localStorage.getItem('token');
 
 		try {
-			const response = await fetch('http://localhost:3000/api/medias/add', {
+			const response = await fetch('/api/medias/add', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

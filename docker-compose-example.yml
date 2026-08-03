@@ -39,13 +39,14 @@ services:
       context: ./front
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:3000
+        - INTERNAL_BACKEND_URL=http://backend:3000
     container_name: media-tracker-front
     restart: always
     ports:
       - "3001:3001"
     environment:
-      NODE_ENV: production
+      - NODE_ENV=production
+      - INTERNAL_BACKEND_URL=http://backend:3000
     depends_on:
       - backend
 

@@ -28,7 +28,7 @@ export default function MediaList() {
 	const fetchUpdatedMedias = async () => {
 		setError(null)
 		const token = localStorage.getItem('token');
-		const res = await fetch('http://localhost:3000/api/medias', {
+		const res = await fetch('/api/medias', {
 			headers: { 'Authorization': `Bearer ${token}` }
 		});
 		const updatedData = await res.json();
@@ -40,7 +40,7 @@ export default function MediaList() {
 
 	const setStatus = async (idMediaUser: number, status: 'A_VOIR' | 'VU' | 'EN_COURS') => {
 		const token = localStorage.getItem('token');
-		fetch('http://localhost:3000/api/medias/setStatus', {
+		fetch('/api/medias/setStatus', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export default function MediaList() {
 
 	const deleteMediaUser = async (idMedia: number) => {
 		const token = localStorage.getItem('token');
-		fetch('http://localhost:3000/api/medias/delete/' + idMedia, {
+		fetch('/api/medias/delete/' + idMedia, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',

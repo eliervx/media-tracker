@@ -37,7 +37,7 @@ export default function LoginPage() {
     setSuccess(null);
 
     const endpoint = isLoginMode ? 'login' : 'signup';
-    const url = `http://localhost:3000/api/auth/${endpoint}`;
+    const url = `/api/auth/${endpoint}`;
 
     try {
       const response = await fetch(url, {

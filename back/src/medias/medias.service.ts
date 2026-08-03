@@ -154,7 +154,7 @@ export class MediasService {
     const flatrateProviders = data?.results?.FR?.flatrate || [];
 
     var allProvidersWithLanguagesData = []
-    var allProvidersWithLanguagesRaw;
+    var allProvidersWithLanguagesRaw = [];
 
     if (flatrateProviders.length > 0) {
       allProvidersWithLanguagesRaw = await this.movieNightAPIService.getMediaStreamingOptions(mediaData.id);

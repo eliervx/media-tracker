@@ -17,6 +17,9 @@ COPY . .
 # Ignore les erreurs de téléchargement Google Fonts si le réseau est lent
 ENV NEXT_FONT_GOOGLE_MOCKED=true
 
+ARG INTERNAL_BACKEND_URL=http://backend:3000
+ENV INTERNAL_BACKEND_URL=$INTERNAL_BACKEND_URL
+
 # Passer le build avec le compilateur standard si Turbopack réseau pose problème
 RUN npm run build
 
