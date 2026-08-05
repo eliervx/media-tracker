@@ -72,29 +72,25 @@ export class MediasService {
       id: mediaData.id,
     }
 
-    if(media.lastUpdate !== media.createdAt){
+    if (media.lastUpdate !== media.createdAt) {
       const providers = await this.getProvidersTMBD(dataForGetProviders)
       await this.updateMediaProviders(mediaData.id, providers)
     }
 
-    return this.prisma.userMedia.create({
-      data: {
-        userId,
-        mediaId: media.id,
-        status: 'A_VOIR',
-      },
-      include: {
-        media: {
-          include: {
-            providers: {
-              include: {
-                provider: true,
-              },
-            },
-          },
+    return this.prisma.userMedia.upsert({
+      where: {
+        userId_mediaId: {
+          userId: userId,
+          mediaId: media.id,
         },
       },
-    });
+      update: {},
+      create: {
+        mediaId: media.id,
+        userId: userId,
+        status: 'A_VOIR',
+      }
+    })
   }
 
   async searchMediaTMBD(query: string) {
@@ -173,9 +169,9 @@ export class MediasService {
         subtitles: p.subtitles.map((val: any) => val.locale.language)
       }
 
-      if(providers.type === "addon"){
+      if (providers.type === "addon") {
         providers.id = p.addon.id
-        providers.name = p.addon.name
+        providers.name = `${p.addon.name} (${p.service.name})`
         providers.logoUrl = p.addon.imageSet.darkThemeImage
       }
 
@@ -202,7 +198,7 @@ export class MediasService {
         });
       }
 
-      const subscriptionProviders = providers.filter((p : any) => p.type === "subscription" || p.type === "addon")
+      const subscriptionProviders = providers.filter((p: any) => p.type === "subscription" || p.type === "addon")
 
       const createdProviders = await tx.mediaProvider.createManyAndReturn({
         data: providers.map((p: any) => ({
@@ -294,7 +290,7 @@ export class MediasService {
     for (const mediaData of mediasData) {
       try {
         const dataForGetProviders = { id: mediaData.id };
-        
+
         // On attend la récupération des providers
         const providers = await this.getProvidersTMBD(dataForGetProviders);
 

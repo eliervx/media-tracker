@@ -39,8 +39,8 @@ model Media {
 }
 
 model Provider {
-  id      String     @id
-  name    String  @unique // "Netflix", "Amazon Prime"
+  id      String     @id @unique
+  name    String 
   logoUrl String?
 
   medias MediaProvider[]

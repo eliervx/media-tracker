@@ -1,0 +1,101 @@
+configs:
+  ts-serve:
+    content: |
+      {
+        "TCP": {
+          "443": {
+            "HTTPS": true
+          }
+        },
+        "Web": {
+          "$${TS_CERT_DOMAIN}:443": {
+            "Handlers": {
+              "/": {
+                "Proxy": "http://frontend:3001"
+              }
+            }
+          }
+        },
+        "AllowFunnel": {
+          "$${TS_CERT_DOMAIN}:443": false
+        }
+      }
+
+services:
+  # 1. Proxy Tailscale
+  media-tracker-ts:
+    image: tailscale/tailscale:latest
+    container_name: media-tracker-ts
+    hostname: media-tracker
+    environment:
+      - TS_AUTHKEY=YOUR_KEY
+      - "TS_EXTRA_ARGS=--advertise-tags=tag:container --reset"
+      - TS_SERVE_CONFIG=/config/serve.json
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    configs:
+      - source: ts-serve
+        target: /config/serve.json
+    volumes:
+      - ${PWD}/state:/var/lib/tailscale
+      - ${PWD}/config:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+
+  # 2. Base de données PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: media-tracker-db
+    restart: always
+    environment:
+      POSTGRES_USER: media-tracker-admin
+      POSTGRES_PASSWORD: pwd-media-tracker-admin
+      POSTGRES_DB: mediatracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U media-tracker-admin -d mediatracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. Backend NestJS
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: media-tracker-back
+    restart: unless-stopped
+    env_file:
+      - ./back/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 4. Frontend NextJS
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+      args:
+        - INTERNAL_BACKEND_URL=http://backend:3000
+    container_name: media-tracker-front
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - INTERNAL_BACKEND_URL=http://backend:3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

@@ -7309,13 +7309,13 @@ export namespace Prisma {
 
   export type ProviderWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    name?: string
     AND?: ProviderWhereInput | ProviderWhereInput[]
     OR?: ProviderWhereInput[]
     NOT?: ProviderWhereInput | ProviderWhereInput[]
+    name?: StringFilter<"Provider"> | string
     logoUrl?: StringNullableFilter<"Provider"> | string | null
     medias?: MediaProviderListRelationFilter
-  }, "id" | "name">
+  }, "id" | "id">
 
   export type ProviderOrderByWithAggregationInput = {
     id?: SortOrder
