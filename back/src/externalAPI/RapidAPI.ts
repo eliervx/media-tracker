@@ -17,8 +17,8 @@ export class RapidAPIService {
       return null;
     }
 
-    // 1. Remplace {type} par 'movie' ou 'series'
-    const type = isMovie ? 'movie' : 'series';
+    // 1. Remplace {type} par 'movie' ou 'tv'
+    const type = isMovie ? 'movie' : 'tv';
 
     try {
       const url = `https://streaming-availability.p.rapidapi.com/shows/${type}/${tmdbId}`
@@ -42,7 +42,7 @@ export class RapidAPIService {
 
       // 4. Extraction du JSON et retour de la donnée
       const data = await response.json();
-      return data.streamingOptions.fr;
+      return data.streamingOptions[country];
 
     } catch (error) {
       this.logger.error(`[RapidAPI Exception] Erreur lors de l'appel pour l'ID ${tmdbId}:`, error);

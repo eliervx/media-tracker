@@ -11,13 +11,23 @@ import {
 	CardHeader,
 	CardTitle,
 } from './ui/card';
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 import { IUserMediaResponse, IProvider, IMediaProvider } from '@/types/media';
 
 
 // 1. On définit la structure d'un film renvoyé par TMDB
 interface TMDBMovie {
 	id: number;
-	title: string;
+	title?: string;
+	name?: string;
+	first_air_date?: string;
 	release_date?: string;
 	poster_path?: string;
 	overview: string;
@@ -30,11 +40,17 @@ interface MediaListProp {
 	fetchUpdatedMedias: () => Promise<void>;
 }
 
-export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: MediaListProp) {
+const items = [
+	{ label: "Film", value: "movie" },
+	{ label: "Serie", value: "tv" },
+]
+
+export default function MovieSearch({ medias, setMedias, fetchUpdatedMedias }: MediaListProp) {
 	const [query, setQuery] = useState('');
 	const [results, setResults] = useState<TMDBMovie[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [isHidden, setIsHidden] = useState<boolean>(false);
+	const [type, setType] = useState<string | null>("movie")
 
 	// 2. useEffect qui se déclenche à chaque fois que 'query' (la recherche) change
 	useEffect(() => {
@@ -45,10 +61,10 @@ export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: Med
 			return;
 		}
 
-		const searchMovies = async () => {
+		const searchMovies = async (type: string = "movie") => {
 			setLoading(true);
 			try {
-				const response = await fetch(`/api/medias/search?query=${encodeURIComponent(query)}`, {
+				const response = await fetch(`/api/medias/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -83,6 +99,14 @@ export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: Med
 						setIsHidden(false);
 					}
 
+					else if (
+						target.closest('#selectType') !== null ||
+						target.closest('[data-radix-select-viewport]') !== null ||
+						target.closest('[role="option"]') !== null
+					) {
+						setIsHidden(false);
+					}
+
 					else if (!isInsideSearchList) {
 						setIsHidden(true);
 					}
@@ -100,15 +124,20 @@ export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: Med
 
 		// Petit système de "debounce" pour éviter de surcharger l'API à chaque lettre tapée
 		const delayDebounceFn = setTimeout(() => {
-			searchMovies();
+			const movieType = type || "movie"
+			searchMovies(movieType);
 		}, 400); // Attend 400ms sans taper avant de lancer la requête
 
 		return () => clearTimeout(delayDebounceFn);
-	}, [query]);
+	}, [query, type]);
 
 	// 3. Fonction pour gérer le clic sur un film et l'ajouter à ta bdd via ton API NestJS
 	const handleAddMedia = async (movie: TMDBMovie) => {
 		const token = localStorage.getItem('token');
+
+		const movieType = type === "movie" ? "FILM" : "SERIE"
+		const title = type === "movie" ? movie.title : movie.name
+		const releaseDate = type === "movie" ? movie.release_date : movie.first_air_date
 
 		try {
 			const response = await fetch('/api/medias/add', {
@@ -119,10 +148,10 @@ export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: Med
 				},
 				body: JSON.stringify({
 					id: movie.id,
-					title: movie.title,
-					type: 'FILM',
+					title: title,
+					type: movieType,
 					posterPath: movie.poster_path,
-					releaseDate: movie.release_date,
+					releaseDate: releaseDate,
 					description: movie.overview
 				})
 			});
@@ -142,11 +171,33 @@ export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: Med
 
 	return (
 		<div className="w-3/5 p-4">
+			<Select
+				id="selectType"
+				items={items}
+				value={type}
+				onValueChange={(value) => {
+					console.log("Nouvelle valeur sélectionnée :", value);
+					setType(value)
+					setResults([])
+				}}>
+				<SelectTrigger className="w-full max-w-48">
+					<SelectValue />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectGroup>
+						{items.map((item) => (
+							<SelectItem key={item.value} value={item.value}>
+								{item.label}
+							</SelectItem>
+						))}
+					</SelectGroup>
+				</SelectContent>
+			</Select>
 			{/* Barre de recherche */}
 			<input
 				id="searchInput"
 				type="text"
-				placeholder="Rechercher un film (ex: Inception...)"
+				placeholder={type === "movie" ? "Rechercher un film (ex: Inception...)" : "Rechercher une série (ex: Blacklist...)"}
 				value={query}
 				onClick={() => setIsHidden(false)}
 				onChange={(e) => setQuery(e.target.value)}
@@ -171,15 +222,15 @@ export default function MovieSearch({ medias, setMedias,fetchUpdatedMedias}: Med
 							{/* Titre en bas, grand et blanc */}
 							<CardHeader className="p-0">
 								<CardTitle className="text-3xl font-bold">
-									{movie.title}
+									{type === "movie" ? movie.title : movie.name}
 								</CardTitle>
 							</CardHeader>
 
 							{/* Description et Providers */}
 							<CardContent className="p-0 space-y-4">
 								{/* On enlève 'text-muted-foreground' pour qu'il soit blanc */}
-								{movie.release_date ?
-									<p className="text-xs text-gray-400">{movie.release_date.split('-')[0]}</p> : ""}
+								{movie.release_date || movie.first_air_date ?
+									<p className="text-xs text-gray-400">{(type === "movie" ? movie.release_date : movie.first_air_date)?.split('-')[0]}</p> : ""}
 								<CardDescription className="text-white/80">
 									{movie.overview}
 								</CardDescription>

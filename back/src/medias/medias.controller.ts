@@ -14,8 +14,8 @@ export class MediasController {
   }
 
   @Get('/search')
-  async searchMediaTMBD(@Query('query') query: string) {
-    return this.mediasService.searchMediaTMBD(query);
+  async searchMediaTMBD(@Query('query') query: string, @Query('type') type: string) {
+    return this.mediasService.searchMediaTMBD(query,type);
   }
 
   @Post('/add')

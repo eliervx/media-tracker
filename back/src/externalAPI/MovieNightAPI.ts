@@ -30,11 +30,11 @@ export class MovieNightAPIService {
       return null;
     }
 
-    // 1. Remplace {type} par 'movie' ou 'series'
-    const type = isMovie ? 'movie' : 'series';
+    // 1. Remplace {type} par 'movie' ou 'tv'
+    const type = isMovie ? 'movie' : 'tv';
 
     // 2. Clé de cache unique (ex: rapidapi_streaming_movie_21778_fr)
-    const cacheKey = `movienightapi_streaming_${type}_${tmdbId}`;
+    const cacheKey = `movienightapi_streaming_${type}_${tmdbId}_${country}`;
 
     // 3. Vérification dans le cache
     const cachedData = await this.cacheManager.get(cacheKey);
@@ -56,9 +56,9 @@ export class MovieNightAPIService {
         return [];
       }
 
-      await this.cacheManager.set(cacheKey, data.streamingOptions.fr, 518_400_000);
+      await this.cacheManager.set(cacheKey, data.streamingOptions[country], 518_400_000);
 
-      return data.streamingOptions.fr;
+      return data.streamingOptions[country];
 
     } catch (error) {
       this.logger.error(`[MovieNightAPI Exception] Erreur lors de l'appel pour l'ID ${tmdbId}:`, error);

@@ -73,7 +73,8 @@ export class MediasService {
     }
 
     if (media.lastUpdate !== media.createdAt) {
-      const providers = await this.getProvidersTMBD(dataForGetProviders)
+      const isMovie = mediaData.type === "FILM" ? true : false
+      const providers = await this.getProvidersTMBD(dataForGetProviders,isMovie)
       await this.updateMediaProviders(mediaData.id, providers)
     }
 
@@ -93,10 +94,9 @@ export class MediasService {
     })
   }
 
-  async searchMediaTMBD(query: string) {
+  async searchMediaTMBD(query: string, type : string) {
     try {
-
-      const url = `https://api.themoviedb.org/3/search/movie?query=${query}&language=fr-FR`;
+      const url = `https://api.themoviedb.org/3/search/${type}?query=${query}&language=fr-FR`;
       const options = {
         method: 'GET',
         headers: { accept: 'application/json', Authorization: `Bearer ${process.env.TMBD_TOKEN}` }
@@ -137,9 +137,11 @@ export class MediasService {
   }
 
   //With /watch/providers from JustWatch
-  async getProvidersTMBD(mediaData: { id: number }) {
+  async getProvidersTMBD(mediaData: { id: number }, isMovie : boolean = true) {
 
-    const url = `https://api.themoviedb.org/3/movie/${mediaData.id}/watch/providers`;
+    const suffixe = isMovie ? "movie" : "tv"
+    const countryCode = process.env.COUNTRY?.toUpperCase();
+    const url = `https://api.themoviedb.org/3/${suffixe}/${mediaData.id}/watch/providers`;
     const options = {
       method: 'GET',
       headers: { accept: 'application/json', Authorization: `Bearer ${process.env.TMBD_TOKEN}` }
@@ -147,13 +149,13 @@ export class MediasService {
     const response = await fetch(url, options);
     const data = await response.json();
 
-    const flatrateProviders = data?.results?.FR?.flatrate || [];
+    const flatrateProviders = data?.results?.[countryCode]?.flatrate || [];
 
     var allProvidersWithLanguagesData = []
     var allProvidersWithLanguagesRaw = [];
 
     if (flatrateProviders.length > 0) {
-      allProvidersWithLanguagesRaw = await this.movieNightAPIService.getMediaStreamingOptions(mediaData.id);
+      allProvidersWithLanguagesRaw = await this.movieNightAPIService.getMediaStreamingOptions(mediaData.id,isMovie,process.env.COUNTRY);
       await sleep(100)
     }
 
@@ -282,7 +284,8 @@ export class MediasService {
         select: {
           id: true,
           title: true,
-          releaseDate: true
+          releaseDate: true,
+          type : true,
         }
       }
     )
@@ -290,9 +293,10 @@ export class MediasService {
     for (const mediaData of mediasData) {
       try {
         const dataForGetProviders = { id: mediaData.id };
+        const isMovie = mediaData.type === "FILM" ? true : false
 
         // On attend la récupération des providers
-        const providers = await this.getProvidersTMBD(dataForGetProviders);
+        const providers = await this.getProvidersTMBD(dataForGetProviders,isMovie);
 
         // On attend la mise à jour en BDD
         await this.updateMediaProviders(mediaData.id, providers);
