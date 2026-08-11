@@ -49,7 +49,7 @@ model Provider {
 // Nouvelle Table Pivot explicite : Fait le lien précis entre un Film et une Plateforme
 model MediaProvider {
   id         Int        @id @default(autoincrement())
-  type       String // ABONNEMENT / LOCATION / ACHAT
+  type       String 
   createdAt  DateTime   @default(now())
   lastUpdate DateTime   @default(now()) @updatedAt
   audios  String[] @default([])
@@ -73,6 +73,8 @@ model UserMedia {
   status     String // "A_VOIR, VU, EN_COURS"
   addedAt    DateTime @default(now())
   lastUpdate DateTime @default(now()) @updatedAt
+  currentSeason Int?
+  currentEpisode Int?
 
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
