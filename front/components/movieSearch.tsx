@@ -49,6 +49,7 @@ export default function MovieSearch({ medias, setMedias, fetchUpdatedMedias }: M
 	const [query, setQuery] = useState('');
 	const [results, setResults] = useState<TMDBMovie[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [adding, setAdding] = useState(false);
 	const [isHidden, setIsHidden] = useState<boolean>(false);
 	const [type, setType] = useState<string | null>("movie")
 
@@ -133,6 +134,8 @@ export default function MovieSearch({ medias, setMedias, fetchUpdatedMedias }: M
 
 	// 3. Fonction pour gérer le clic sur un film et l'ajouter à ta bdd via ton API NestJS
 	const handleAddMedia = async (movie: TMDBMovie) => {
+		setLoading(true);
+		setAdding(true);
 		const token = localStorage.getItem('token');
 
 		const movieType = type === "movie" ? "FILM" : "SERIE"
@@ -166,6 +169,10 @@ export default function MovieSearch({ medias, setMedias, fetchUpdatedMedias }: M
 
 		} catch (err) {
 			console.error(err);
+		}
+		finally {
+			setLoading(false);
+			setAdding(false);
 		}
 	};
 
@@ -204,7 +211,8 @@ export default function MovieSearch({ medias, setMedias, fetchUpdatedMedias }: M
 				className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 			/>
 
-			{loading && <p className="text-sm text-gray-500 mt-2">Recherche en cours...</p>}
+			{loading && !adding && <p className="text-sm text-gray-500 mt-2">Recherche en cours...</p>}
+			{loading && adding && <p className="text-sm text-gray-500 mt-2">Ajout en cours...</p>}
 
 			{/* Liste des résultats */}
 			<CardGroup className='md:grid-cols-3' hidden={isHidden}>
